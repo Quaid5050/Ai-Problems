@@ -8,86 +8,89 @@
 #CSP(variable, domain,constrain)
 # assignvariable()  unassignedvariable()  inconflicconstrainchacking()
 
+# our expected output is...
+# initialize csp problem
+# {'a': 1, 'b': 2, 'c': 1}
+
+from functools import reduce
+
 class CSP:
-    def __init__(self,var,domains,constrains,neighbors):
+    def __init__(self, var, domains, constraints, neighbors):
         print("initialize csp problem")
-        var=var
-        update(self,var=var,domains=domains, constrains=constrains,neighbors=neighbors)
+        self.var = var
+        self.domains = domains
+        self.constraints = constraints
+        self.neighbors = neighbors
 
-    def assign(self,var,val,assignment):
-        assignment[var]=val
+    def assign(self, var, val, assignment):
+        assignment[var] = val
 
-    def unassign(self,var,assignment):
+    def unassign(self, var, assignment):
         if var in assignment:
             del assignment[var]
 
-
-    def nconflicts(self,var,val,assignment):
+    def nconflicts(self, var, val, assignment):
         def conflict(var2):
-            val2=assignment.get(var2,None)
-            return val2 != None and not self.constraints(var,va1,var2,val2)
-        return count_if(conflict,self.neighbors)
-
-
-
+            val2 = assignment.get(var2, None)
+            return val2 != None and not self.constraints(var, val, var2, val2)
+        return count_if(conflict, self.neighbors[var])
 
 def backtracking(csp):
     update(csp)
-    return recurcive_backtracking({},csp)
+    return recursive_backtracking({}, csp)
 
-
-def recurcive_backtracking(assignment,csp):
-    if len(csp.var)==len(assignment):
+def recursive_backtracking(assignment, csp):
+    if len(csp.var) == len(assignment):
         return assignment
-    var=select_unassigned_variable(assignment,csp)
+    var = select_unassigned_variable(assignment, csp)
 
-    for val in order_domain_values(var,assignment,csp):
-        if csp.nconflicts(var,val,assignment)==0:
-            csp.assign(var,value,assignment)
-            result=recurcive_backtracking(assignment,csp)
+    for val in order_domain_values(var, assignment, csp):
+        if csp.nconflicts(var, val, assignment) == 0:
+            csp.assign(var, val, assignment)
+            result = recursive_backtracking(assignment, csp)
             if result is not None:
                 return result
-            csp.unassign(var,assignment)
+            csp.unassign(var, assignment)
     return None
 
 
-
-def select_unassigned_variable(assignment,csp):
-    # return  ["any one unassigned variable"]
+def select_unassigned_variable(assignment, csp):
     for v in csp.var:
         if v not in assignment:
-            return  v
+            return v
 
-def order_domain_values(var,assignments,csp):
-    #return ["return one value from domain"]
-    domain=csp.domains[var][:]
+def order_domain_values(var, assignment, csp):
+    domain = csp.domains[var][:]
     while domain:
-        yield domain.pop()
+        yield domain[0]
+        domain = domain[1:]
 
-
-
-def update(x ,**entries):
-     if isinstance(x,dict):
-         x.update(entries)
-     else:
-         x.__dict__.update(entries)
-         return x
-
-def different_values_constraint(A,a,B,b):
-    return a!=b
-
-def count_if(fun,seq):
-    f=lambda count,x:count+(fun(x))
-    return reduce(f,seq,0)
+def count_if(fun, seq):
+    f = lambda count, x: count + (fun(x))
+    return reduce(f, seq, 0)
 
 class UniversalDict:
-    def __init__(self,val):
-        self.value=val
+    def __init__(self, val):
+        self.value = val
     def __getitem__(self, key):
-        return  self.value
+        return self.value
 
 
-vars=['a','b','c']
-domains=[1,2,3]
-neighbors={'a':['b'],'b':['a','c'],'c':['b']}
-backtracking(CSP(vars,UniversalDict(domains),different_values_constraint,neighbors,))
+# our constraint a!=b
+def different_values_constraint(A, a, B, b):
+    return a != b
+
+def update(x, **entries):
+    if isinstance(x, dict):
+        x.update(entries)
+    else:
+        x.__dict__.update(entries)
+    return x
+
+
+vars = ['a', 'b', 'c']
+domains = UniversalDict([1, 2, 3])
+neighbors = {'a': ['b'], 'b': ['a', 'c'], 'c': ['b']}
+result=backtracking(CSP(vars, domains, different_values_constraint, neighbors))
+print(result)
+
